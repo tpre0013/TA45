@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Lonsdale Street Parking</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      background-color: #ffffff;
+    }
+    /* ...existing code... */
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <a href="traffic.html" title="Traffic Insights">
+      <span class="material-icons">map</span>
+    </a>
+  </div>
+  <div class="main">
+    <h2>Lonsdale street parking</h2>
+    <div class="map-placeholder">
+      <div id="parking-map" style="width: 100%; height: 200px;"></div>
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+      <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+      <script>
+        // ...existing code...
+      </script>
+    </div>
+    <div class="buttons">
+      <div class="btn" onclick="openNavigation()">
+        <span class="material-icons">directions</span>
+        Get directions
+      </div>
+      <div class="btn" onclick="saveLocation()">
+        <span class="material-icons">bookmark_add</span>
+        Save location
+      </div>
+    </div>
+    <script>
+      // ...existing code...
+    </script>
+    <div class="chart-box">
+      <div style="display: flex; justify-content: space-between;">
+        <h4>Peak parking times</h4>
+        <div class="filter-label">Day filter</div>
+      </div>
+      <div class="chart-placeholder"></div>
+    </div>
+  </div>
+</body>
+</html>

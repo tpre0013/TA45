@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Parking Finder</title>
+  <!-- Google Fonts & Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      background-color: #f0f0f0;
+    }
+    /* ...existing code... */
+  </style>
+  <script>
+    // ...existing code...
+  </script>
+</head>
+<body>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <a href="/traffic/" target="_blank" title="Traffic Insights">
+      <span class="material-icons">map</span>
+    </a>
+  </div>
+  <!-- Main content -->
+  <div class="main">
+    <div class="search-container">
+      <div class="search-bar">
+        <input type="text" placeholder="Search for places in Melbourne CBD..." />
+        <span class="material-icons search-icon">search</span>
+      </div>
+      <!-- Suggestions dropdown will be added here by JavaScript -->
+    </div>
+    <div class="filters">
+      <p><strong>Nearby Parking</strong></p>
+      <p>Real-time availability within Melbourne CBD</p>
+      <div class="filter-controls">
+        <div class="filter-group">
+          <label for="distanceFilter">Distance:</label>
+          <select id="distanceFilter">
+            <option value="2">Within 2 km</option>
+            <option value="1">Within 1 km</option>
+            <option value="0.5">Within 0.5 km</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="sortFilter">Sort by:</label>
+          <select id="sortFilter">
+            <option value="availability">Availability (Available first)</option>
+            <option value="distance">Distance (Nearest first)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="parking-cards-container"></div>
+  </div>
+</body>
+</html>
