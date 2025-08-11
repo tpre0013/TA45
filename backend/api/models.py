@@ -5,11 +5,6 @@ class ParkingSpot(models.Model):
     available = models.BooleanField(default=True)
     duration_limit = models.IntegerField(help_text="Max duration in minutes")
     updated_at = models.DateTimeField(auto_now=True)
-<<<<<<< HEAD
-
-    def __str__(self):
-        return f"{self.location} - {'Available' if self.available else 'Taken'}"
-=======
     latitude = models.FloatField()
     longitude = models.FloatField()
     
@@ -31,4 +26,3 @@ class LiveParkingData(models.Model):
         managed = False
         db_table = 'parking_data_withStreet'
 
->>>>>>> origin/aws/hosting

@@ -2,8 +2,6 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import ParkingSpot
 from .serializers import ParkingSpotSerializer
-<<<<<<< HEAD
-=======
 from django.shortcuts import render
 from django.db.models import Q
 from .models import LiveParkingData
@@ -22,25 +20,18 @@ def home_page(request):
 
 def traffic_page(request):
     return render(request, 'traffic.html')
->>>>>>> origin/aws/hosting
 
 @api_view(['GET'])
 def hello_world(request):
     return Response({"message": "Hello, API world!"})
 
-<<<<<<< HEAD
-=======
 def traffic_page(request):
     return render(request, "traffic.html")
 
->>>>>>> origin/aws/hosting
 @api_view(['GET'])
 def get_spots(request):
     spots = ParkingSpot.objects.all()
     serializer = ParkingSpotSerializer(spots, many=True)
-<<<<<<< HEAD
-    return Response(serializer.data)
-=======
     return Response(serializer.data)
 
 # Haversine distance in kilometers
@@ -559,4 +550,3 @@ def get_available_spots(request):
             "error": str(e),
             "success": False
         }, status=500)
->>>>>>> origin/aws/hosting
