@@ -10,8 +10,6 @@ import requests
 from django.http import JsonResponse
 import logging
 from django.shortcuts import render
-import folium
-from folium import plugins
 import json
 
 # Set up logging
