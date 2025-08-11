@@ -1,46 +1,408 @@
 {% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Traffic Insights</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Traffic Insights - SpotLocator</title>
+
+  <!-- Google Fonts & Material Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
   <style>
-    body { margin:0; font-family: 'Roboto', sans-serif; background:#fff; }
-    .sidebar { position:fixed; top:0; left:0; width:60px; height:100%; background:#f3eaea; display:flex; flex-direction:column; align-items:center; padding-top:20px; box-shadow:2px 0 5px rgba(0,0,0,.1); }
-    .sidebar a { margin:20px 0; text-decoration:none; }
-    .material-icons { color:#555; font-size:28px; cursor:pointer; }
-    .main { margin-left:60px; padding:20px; }
-    .chart-box { background:#fafafa; padding:20px; margin:20px 0; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,.1); }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+
+    /* Header Styles */
+    .header {
+      background: linear-gradient(135deg, #2196F3 0%, #21CBF3 100%);
+      color: white;
+      padding: 20px 0;
+      box-shadow: 0 8px 32px rgba(33, 150, 243, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="traffic" patternUnits="userSpaceOnUse" width="20" height="20"><circle cx="10" cy="10" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23traffic)"/></svg>');
+      opacity: 0.3;
+    }
+
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      z-index: 2;
+    }
+
+    .logo-section {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .logo-icon {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      padding: 12px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .logo-icon .material-icons {
+      font-size: 32px;
+      color: white;
+    }
+
+    .logo-text h1 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 5px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .logo-text p {
+      font-size: 16px;
+      opacity: 0.9;
+      font-weight: 300;
+    }
+
+    .header-stats {
+      display: flex;
+      gap: 30px;
+      align-items: center;
+    }
+
+    .stat-item {
+      text-align: center;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 12px 20px;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    .stat-item:hover {
+      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .stat-number {
+      font-size: 24px;
+      font-weight: 700;
+      display: block;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      opacity: 0.8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Sidebar styles - Enhanced */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 70px;
+      height: 100%;
+      background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 40px;
+      box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+      z-index: 999;
+      backdrop-filter: blur(10px);
+    }
+
+    .sidebar a {
+      text-decoration: none;
+      margin: 15px 0;
+      padding: 15px;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sidebar a::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .sidebar a:hover::before {
+      opacity: 1;
+    }
+
+    .sidebar a:hover {
+      transform: translateX(5px);
+    }
+
+    .sidebar .material-icons {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 28px;
+      cursor: pointer;
+      position: relative;
+      z-index: 1;
+    }
+
+    .sidebar a:hover .material-icons {
+      color: white;
+    }
+
+    /* Main content area */
+    .main {
+      margin-left: 70px;
+      padding: 30px;
+      min-height: 100vh;
+    }
+
+    /* Chart container styles */
+    .chart-container {
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chart-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(33, 150, 243, 0.02), rgba(33, 203, 243, 0.02));
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .chart-container:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.15);
+    }
+
+    .chart-container:hover::before {
+      opacity: 1;
+    }
+
+    .chart-header {
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .chart-header h4 {
+      color: #2c3e50;
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .chart-header p {
+      color: #7f8c8d;
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 1.5;
+    }
+
+    .chart-content {
+      position: relative;
+      z-index: 2;
+    }
+
+    .chart-iframe {
+      width: 100%;
+      height: 500px;
+      border: none;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+      background: #fafafa;
+      transition: all 0.3s ease;
+    }
+
+    .chart-iframe:hover {
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .header-content {
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+      }
+
+      .header-stats {
+        gap: 20px;
+      }
+
+      .stat-item {
+        padding: 10px 15px;
+      }
+
+      .main {
+        margin-left: 0;
+        padding: 20px;
+      }
+      
+      .sidebar {
+        display: none;
+      }
+
+      .chart-container {
+        padding: 25px 20px;
+      }
+
+      .chart-header h4 {
+        font-size: 22px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .chart-iframe {
+        height: 400px;
+      }
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .chart-container {
+      animation: fadeInUp 0.6s ease forwards;
+    }
+
+    .chart-container:nth-child(odd) {
+      animation-delay: 0.1s;
+    }
+
+    .chart-container:nth-child(even) {
+      animation-delay: 0.2s;
+    }
   </style>
 </head>
-<body>
 
+<body>
+  <!-- Enhanced Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo-section">
+        <div class="logo-icon">
+          <span class="material-icons">analytics</span>
+        </div>
+        <div class="logo-text">
+          <h1>Traffic Insights</h1>
+          <p>Data-driven analysis for Melbourne's transportation patterns</p>
+        </div>
+      </div>
+      <div class="header-stats">
+        <div class="stat-item">
+          <span class="stat-number">Real-time</span>
+          <span class="stat-label">Analytics</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">CBD</span>
+          <span class="stat-label">Focus</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">Trends</span>
+          <span class="stat-label">Insights</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Enhanced Sidebar -->
   <div class="sidebar">
-    <a href="{% url 'traffic' %}" title="Traffic Insights">
+    <!-- Home Page -->
+    <a href="/" title="Home Page">
+      <span class="material-icons">home</span>
+    </a>
+
+    <!-- Traffic Insights -->
+    <a href="/traffic/" title="Traffic Insights">
       <span class="material-icons">map</span>
     </a>
   </div>
 
+  <!-- Main content -->
   <div class="main">
-    <h2>Traffic insights</h2>
-
-    <div class="chart-box">
-      <h4>Population Trends Analysis</h4>
-      <p>Understanding population growth impact on parking demand</p>
-      <iframe src="{% static 'charts/population_trends.html' %}"
-              style="width:100%; height:500px; border:none; border-radius:8px;"
-              title="Population Trends Chart"></iframe>
+    <!-- Population Trends Chart -->
+    <div class="chart-container">
+      <div class="chart-header">
+        <h4>
+          <span class="material-icons" style="color: #1976d2;">trending_up</span>
+          Population Trends Analysis
+        </h4>
+        <p>Understanding population growth impact on parking demand and traffic infrastructure. This analysis helps predict future transportation needs and guides smart city planning decisions for Melbourne CBD.</p>
+      </div>
+      <div class="chart-content">
+        <iframe src="{% url 'population_trends' %}" class="chart-iframe" title="Population Trends Chart"></iframe>  
+      </div>
     </div>
 
-    <div class="chart-box">
-      <h4>Car Ownership Trends</h4>
-      <p>Vehicle ownership patterns affecting parking infrastructure needs</p>
-      <iframe src="{% static 'charts/carownership_trends.html' %}"
-              style="width:100%; height:500px; border:none; border-radius:8px;"
-              title="Car Ownership Trends Chart"></iframe>
-    </div>
-  </div>
-
+    <!-- Car Ownership Trends Chart -->
+    <div class="chart-container">
+      <div class="chart-header">
+        <h4>
+          <span class="material-icons" style="color: #f57c00;">directions_car</span>
+          Car Ownership Trends
+        </h4>
+        <p>Vehicle ownership patterns affecting parking infrastructure needs. This data reveals changing mobility preferences and helps optimize parking allocation strategies across different demographics and city zones.</p>
+      </div>
+      <div class="chart-content">
+        <iframe src="{% url 'carownership_trends' %}" class="chart-iframe" title="Car Ownership Trends Chart"></iframe>
+      </div>
 </body>
 </html>

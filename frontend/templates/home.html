@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -34,6 +35,17 @@
       position: relative;
       overflow: hidden;
     }
+
+    /* Remove extra top space between header and search section */
+    .main {
+      margin-left: 60px;
+      padding-top: 0;       /* was 20px from .main */
+    }
+
+    .search-container {
+      margin-top: 0;        /* remove extra margin if any */
+    }
+
 
     .header::before {
       content: '';
@@ -134,7 +146,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding-top: 120px;
+      padding-top: 40px;
       box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
       z-index: 999;
       backdrop-filter: blur(10px);
@@ -187,7 +199,7 @@
     .main {
       margin-left: 70px;
       padding: 30px;
-      padding-top: 150px;
+      padding-top: 40px;
       min-height: 100vh;
     }
 
@@ -689,6 +701,66 @@
       font-size: 16px;
     }
 
+    /* Message box styles for different scenarios */
+.out-of-coverage-message {
+  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%) !important;
+  border: 2px solid rgba(198, 40, 40, 0.3) !important;
+  color: #c62828 !important;
+  animation: slideInFromTop 0.5s ease-out;
+}
+
+.no-data-message {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%) !important;
+  border: 2px solid rgba(255, 152, 0, 0.3) !important;
+  color: #ef6c00 !important;
+  animation: slideInFromTop 0.5s ease-out;
+}
+
+.no-parking-message {
+  background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%) !important;
+  border: 2px solid rgba(123, 31, 162, 0.3) !important;
+  color: #7b1fa2 !important;
+  animation: slideInFromTop 0.5s ease-out;
+}
+
+/* Animation for message boxes */
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Hover effects for message boxes */
+.out-of-coverage-message:hover,
+.no-data-message:hover,
+.no-parking-message:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15) !important;
+  transition: all 0.3s ease;
+}
+
+/* Icon styling within message boxes */
+.out-of-coverage-message div:first-child,
+.no-data-message div:first-child,
+.no-parking-message div:first-child {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
     /* Responsive Design */
     @media (max-width: 768px) {
       .header-content {
@@ -819,6 +891,7 @@
     let map = null;
     let markersGroup = null;
     let searchLocationMarker = null;
+    let isOutOfBounds = false; // Flag to track out-of-bounds state
 
     // Create suggestions dropdown
     const suggestionsDropdown = document.createElement('div');
@@ -858,6 +931,92 @@
       }).addTo(map);
       
       searchLocationMarker.bindPopup(`<b>Search Location</b><br>${currentSearchLocation}`);
+    }
+
+    // Initialize default map on page load
+    function initializeDefaultMap() {
+      // Melbourne CBD center coordinates
+      const melbourneCBD = { lat: -37.8136, lng: 144.9631 };
+      
+      // Show map container and controls immediately
+      mapContainer.classList.add('show');
+      mapControls.classList.add('show');
+      
+      // Create map centered on Melbourne CBD
+      map = L.map('map').setView([melbourneCBD.lat, melbourneCBD.lng], 14);
+      
+      // Add OpenStreetMap tiles
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+      
+      // Create marker groups
+      markersGroup = L.layerGroup().addTo(map);
+      
+      // Load CBD parking spots on default map
+      loadDefaultCBDSpots();
+    }
+
+    //----------------------------
+    
+
+
+    //------------------------------
+    
+
+    // Load CBD spots for the default map
+    async function loadDefaultCBDSpots() {
+      try {
+        const response = await fetch('/api/spots/nearby/?lat=-37.8136&lng=144.9631&query=Melbourne CBD');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.results && data.results.length > 0) {
+            // Add markers for all CBD spots
+            data.results.forEach(spot => {
+              const hasAnyFree = spot.segment_counts && Number(spot.segment_counts.available) > 0;
+              const displayStatus = hasAnyFree ? 'Available' : 'Occupied';
+              const color = getStatusColor(displayStatus);
+              const icon = getStatusIcon(displayStatus);
+
+              const marker = L.marker([spot.lat, spot.lng], {
+                icon: L.divIcon({
+                  className: 'parking-marker',
+                  html: `<div style="
+                    background:${color};
+                    color:#fff;
+                    width:20px;height:20px;border-radius:50%;
+                    border:2px solid #fff;
+                    box-shadow:0 2px 4px rgba(0,0,0,.3);
+                    display:flex;align-items:center;justify-content:center;
+                    font-size:10px;font-weight:bold;">${icon}</div>`,
+                  iconSize: [24, 24],
+                  iconAnchor: [12, 12]
+                })
+              });
+
+              const popupContent = `
+                <div class="custom-popup">
+                  <div class="popup-content">
+                    <div class="popup-title">${spot.address}</div>
+                    <div class="popup-status" style="background-color:${color};">Segment: ${displayStatus}</div>
+                    ${spot.segment_counts ? `
+                      <div class="popup-info">
+                        Available: ${spot.segment_counts.available} of ${spot.segment_counts.total} bays
+                      </div>` : ``}
+                    <button class="popup-navigate" onclick="openNavigation(${spot.lat}, ${spot.lng}, '${spot.address.replace(/'/g, "\\'")}')">Navigate</button>
+                  </div>
+                </div>
+              `;
+
+              marker.bindPopup(popupContent);
+              markersGroup.addLayer(marker);
+            });
+          }
+        }
+      } catch (error) {
+        console.log('Could not load default CBD spots:', error);
+      }
     }
 
     // Update map markers based on filtered data
@@ -914,7 +1073,7 @@
                 <div class="popup-info">
                   Available: ${spot.segment_counts.available} of ${spot.segment_counts.total} bays
                 </div>` : ``}
-              <div class="popup-info">This bay (ID ${spot.kerbsideid}): ${spot.status}</div>
+              
               <div class="popup-info">Distance: ${distanceText}</div>
               <div class="popup-info">Updated: ${updatedText}</div>
               <button class="popup-navigate" onclick="openNavigation(${spot.lat}, ${spot.lng}, '${spot.address.replace(/'/g, "\\'")}')">Navigate</button>
@@ -1176,7 +1335,7 @@
       });
     }
 
-    // Live search using Django API
+    // UPDATED: Live search using Django API - NO FRONTEND VALIDATION
     async function performSearch() {
       const searchTerm = searchInput.value.trim();
       hideSuggestions();
@@ -1195,13 +1354,14 @@
           const userLat = position.coords.latitude;
           const userLng = position.coords.longitude;
 
+          // Let backend handle validation - just send the request
           await fetchNearbySpots(userLat, userLng, 'Your current location');
         }, () => {
           showError('Unable to retrieve your location');
         });
 
       } else {
-        // Convert text location to coordinates
+        // Convert text location to coordinates - let backend validate
         try {
           const geoResp = await fetch(
             `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchTerm + ', Melbourne, Australia')}`,
@@ -1226,7 +1386,7 @@
           const userLat = parseFloat(geoData[0].lat);
           const userLng = parseFloat(geoData[0].lon);
           
-          // This will clear the loading state and update cards/map
+          // Let backend handle CBD validation - just send the request
           await fetchNearbySpots(userLat, userLng, searchTerm);
 
         } catch (error) {
@@ -1236,113 +1396,168 @@
       }
     }
 
-    // Fetch nearby parking spots from API
+    // UPDATED: Fetch nearby parking spots from API - NO FRONTEND VALIDATION
     async function fetchNearbySpots(lat, lng, label) {
-      try {
-        console.log(`Fetching parking data for: ${label} (${lat}, ${lng})`);
-        
-        const response = await fetch(`/api/spots/nearby/?lat=${lat}&lng=${lng}&query=${encodeURIComponent(label)}`, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          }
-        });
-
-        console.log('Response status:', response.status);
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('API Error Response:', errorText);
-          
-          if (response.status === 404) {
-            showError('Location not found. Please try a different location.');
-          } else if (response.status >= 500) {
-            showError('Server error. Please try again later.');
-          } else {
-            showError('Failed to retrieve parking data. Please try again.');
-          }
-          return;
-        }
-
-        const data = await response.json();
-        console.log('API Response data:', data);
-
-        // Check if location is outside CBD
-        if (data.in_cbd === false || (data.total_count === 0 && data.message && data.message.includes('outside'))) {
-          showOutOfBoundsMessage(label, data.message || 'This location is outside Melbourne CBD area');
-          return;
-        }
-
-        // Set location and initialize map FIRST
-        currentSearchLocation = label;
-        initializeMap(lat, lng);
-
-        // Update currentParkingData immediately
-        if (data.success !== false && data.results && data.results.length > 0) {
-          currentParkingData = data.results;
-          console.log(`Updated currentParkingData with ${currentParkingData.length} spots`);
-        } else {
-          currentParkingData = [];
-          console.log('No parking data found, setting empty array');
-        }
-
-        // CRITICAL: Update both cards and map immediately after getting data
-        console.log('Calling updateParkingCards immediately...');
-        updateParkingCards();
-        
-        console.log('Calling updateMapMarkers immediately...');
-        updateMapMarkers(currentParkingData);
-
-      } catch (error) {
-        console.error('Error fetching nearby spots:', error);
-        if (error.name === 'TypeError' && error.message.includes('fetch')) {
-          showError('Network error. Please check your internet connection.');
-        } else {
-          showError('Failed to retrieve parking data. Please try again.');
-        }
+  try {
+    console.log(`Fetching parking data for: ${label} (${lat}, ${lng})`);
+    
+    const response = await fetch(`/api/spots/nearby/?lat=${lat}&lng=${lng}&query=${encodeURIComponent(label)}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
       }
-    }
+    });
 
-    // Show out of bounds message
-    function showOutOfBoundsMessage(location, message) {
-      const container = document.querySelector('.parking-cards-container');
+    console.log('Response status:', response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API Error Response:', errorText);
       
-      // Clear any existing summary or error messages
-      const existingSummary = document.querySelector('.parking-summary');
-      const existingError = document.querySelector('.out-of-bounds-message');
-      const existingErrorMsg = document.querySelector('.error-message');
-      if (existingSummary) existingSummary.remove();
-      if (existingError) existingError.remove();
-      if (existingErrorMsg) existingErrorMsg.remove();
-
-      // Hide map and controls since location is out of bounds
-      mapContainer.classList.remove('show');
-      mapControls.classList.remove('show');
-
-      const outOfBoundsDiv = document.createElement('div');
-      outOfBoundsDiv.className = 'out-of-bounds-message';
-      outOfBoundsDiv.innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px;">
-          <span style="font-size: 32px;">🚫</span>
-          <span style="font-size: 20px; font-weight: bold;">Location Outside Melbourne CBD</span>
-        </div>
-        <div style="font-size: 18px; margin-bottom: 10px;">"${location}" is not within our coverage area</div>
-        <div style="font-size: 16px; font-weight: normal; line-height: 1.5; opacity: 0.8;">
-          SpotLocator provides parking data only for Melbourne CBD area.<br>
-          Please search for locations like: Flinders Street Station, Collins Street, Bourke Street Mall, etc.
-        </div>
-      `;
-      container.parentNode.insertBefore(outOfBoundsDiv, container);
-
-      container.innerHTML = `
-        <div class="no-parking-message">
-          <div style="font-size: 24px; margin-bottom: 12px;">🅿️ No Parking Data Available</div>
-          <div>Try searching within Melbourne CBD for real-time parking information</div>
-        </div>
-      `;
+      if (response.status === 404) {
+        showError('Location not found. Please try a different location.');
+      } else if (response.status >= 500) {
+        showError('Server error. Please try again later.');
+      } else {
+        showError('Failed to retrieve parking data. Please try again.');
+      }
+      return;
     }
 
+    const data = await response.json();
+    console.log('API Response data:', data);
+
+    // UPDATED: Check backend response and handle different message types with proper icons
+    if (data.message_type === 'out_of_coverage') {
+      // Location outside CBD coverage - Red warning with stop sign
+      showOutOfBoundsMessage(label, data.message || 'Location is not within our coverage area', 'out_of_coverage');
+      return;
+    }
+    
+    if (data.message_type === 'no_data_in_cbd') {
+      // Location in CBD but no parking data - Orange warning with warning sign
+      showOutOfBoundsMessage(label, data.message || 'No parking data for this location', 'no_data_in_cbd');
+      return;
+    }
+
+    // Legacy fallback for old response format
+    if (data.in_cbd === false) {
+      showOutOfBoundsMessage(label, data.message || 'Location is not within our coverage area', 'out_of_coverage');
+      return;
+    }
+    
+    if (data.total_count === 0 && data.in_cbd === true) {
+      showOutOfBoundsMessage(label, data.message || 'No parking data for this location', 'no_data_in_cbd');
+      return;
+    }
+
+    // Clear the out-of-bounds state when we get valid data
+    isOutOfBounds = false;
+
+    // Set location and initialize map
+    currentSearchLocation = label;
+    initializeMap(lat, lng);
+
+    // Update parking data
+    if (data.success !== false && data.results && data.results.length > 0) {
+      currentParkingData = data.results;
+      console.log(`Updated currentParkingData with ${currentParkingData.length} spots`);
+    } else {
+      currentParkingData = [];
+      console.log('No parking data found, setting empty array');
+    }
+
+    // Update UI
+    console.log('Calling updateParkingCards immediately...');
+    updateParkingCards();
+    
+    console.log('Calling updateMapMarkers immediately...');
+    updateMapMarkers(currentParkingData);
+
+  } catch (error) {
+    console.error('Error fetching nearby spots:', error);
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      showError('Network error. Please check your internet connection.');
+    } else {
+      showError('Failed to retrieve parking data. Please try again.');
+    }
+  }
+}
+
+    // UPDATED: Show single out of bounds message
+    function showOutOfBoundsMessage(location, message, messageType = null) {
+  // Set the out-of-bounds flag and clear parking data
+  isOutOfBounds = true;
+  currentParkingData = [];
+  currentSearchLocation = '';
+
+  const container = document.querySelector('.parking-cards-container');
+  
+  // Clear any existing summary or error messages
+  const existingSummary = document.querySelector('.parking-summary');
+  const existingError = document.querySelector('.out-of-bounds-message');
+  const existingErrorMsg = document.querySelector('.error-message');
+  const existingNoParkingMsg = document.querySelector('.no-parking-message');
+  if (existingSummary) existingSummary.remove();
+  if (existingError) existingError.remove();
+  if (existingErrorMsg) existingErrorMsg.remove();
+  if (existingNoParkingMsg) existingNoParkingMsg.remove();
+
+  // Hide map and controls since location is out of bounds
+  mapContainer.classList.remove('show');
+  mapControls.classList.remove('show');
+
+  // Determine message and styling based on message type
+  let displayMessage, subMessage, iconSymbol, containerClass, backgroundColor, borderColor;
+  
+  if (messageType === 'out_of_coverage') {
+    // Location outside CBD - Red warning
+    iconSymbol = "🚫";
+    displayMessage = "Location is not within our coverage area";
+    subMessage = "SpotLocator provides parking data only for Melbourne CBD area.";
+    containerClass = "out-of-coverage-message";
+    backgroundColor = "linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)";
+    borderColor = "rgba(198, 40, 40, 0.2)";
+  } else if (messageType === 'no_data_in_cbd') {
+    // Location in CBD but no data - Orange warning
+    iconSymbol = "⚠️";
+    displayMessage = "No parking data for this location";
+    subMessage = "This area is within Melbourne CBD but currently has no parking sensors or data available.";
+    containerClass = "no-data-message";
+    backgroundColor = "linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)";
+    borderColor = "rgba(255, 152, 0, 0.2)";
+  } else {
+    // Default fallback - Generic warning
+    iconSymbol = "❓";
+    displayMessage = "No parking data for this location";
+    subMessage = "SpotLocator provides parking data only for Melbourne CBD area.";
+    containerClass = "no-parking-message";
+    backgroundColor = "linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)";
+    borderColor = "rgba(198, 40, 40, 0.2)";
+  }
+
+  // Show the appropriate message container
+  container.innerHTML = `
+    <div class="${containerClass}" style="
+      background: ${backgroundColor};
+      border: 1px solid ${borderColor};
+      border-radius: 16px;
+      padding: 40px 30px;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      margin: 20px 0;
+    ">
+      <div style="font-size: 48px; margin-bottom: 16px;">${iconSymbol}</div>
+      <div style="font-size: 24px; font-weight: 600; margin-bottom: 12px; color: #2c3e50;">${displayMessage}</div>
+      <div style="font-size: 16px; color: #5a6c7d; margin-bottom: 16px;">${subMessage}</div>
+      <div style="font-size: 14px; color: #7f8c8d; background: rgba(255, 255, 255, 0.7); padding: 12px; border-radius: 8px; margin-top: 16px;">
+        💡 Try searching for: Flinders Street Station, Collins Street, Bourke Street Mall, Federation Square, etc.
+      </div>
+    </div>
+  `;
+}
+    
     // Render cards from live API data
     function updateParkingCards() {
       console.log('updateParkingCards called, currentParkingData length:', currentParkingData ? currentParkingData.length : 'undefined');
@@ -1436,7 +1651,7 @@
         card.innerHTML = `
           <div class="info-group">
             <strong>📍 ${parking.address}</strong>
-            <span>🆔 ID: ${parking.kerbsideid}</span>
+            
             <span>🅿️ ${availabilityLine}</span>
             <span class="distance-info">📏 Distance: ${parking.distance !== '?' ? parking.distance + ' km' : 'Unknown'}</span>
             <span style="font-size: 12px; color: #7f8c8d;">🕒 Updated: ${timeString}</span>
@@ -1470,10 +1685,6 @@
       const parkingCards = document.querySelectorAll('.parking-card');
 
       parkingCards.forEach(function (card) {
-        card.addEventListener('dblclick', function () {
-          window.location.href = 'parking-detail.html';
-        });
-
         card.style.cursor = 'pointer';
       });
 
@@ -1539,16 +1750,21 @@
       }
     });
 
-    // Set up auto-refresh for real-time updates
+    // Auto-refresh parking data every 30 seconds
     setInterval(() => {
-      if (currentParkingData.length > 0) {
-        // Only refresh if we have data (don't refresh empty states)
+      // Only refresh if we have data AND we're not in an out-of-bounds state
+      if (currentParkingData.length > 0 && !isOutOfBounds && currentSearchLocation) {
+        console.log('Auto-refreshing parking data...');
         updateParkingCards();
         updateMapMarkers(currentParkingData);
+      } else {
+        console.log('Skipping auto-refresh: no data, out of bounds, or no search location');
       }
-    }, 30000); // Refresh every 30 seconds
+    }, 30000);
 
+    // Initialize everything on page load
     addCardEvents();
+    initializeDefaultMap();
   });
   </script>
 
@@ -1586,6 +1802,11 @@
 
   <!-- Enhanced Sidebar -->
   <div class="sidebar">
+    <!-- Home Page -->
+    <a href="/" title="Home Page">
+      <span class="material-icons">home</span>
+    </a>
+
     <!-- Traffic Insights -->
     <a href="/traffic/" title="Traffic Insights">
       <span class="material-icons">map</span>

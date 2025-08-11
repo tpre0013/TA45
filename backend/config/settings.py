@@ -75,8 +75,14 @@ DATABASES = {
     }
 }
 
-STATIC_URL = "static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_URL = "/static/"
+STATICFILES_DIRS = [BASE_DIR / "frontend" / "static"]
+print(STATICFILES_DIRS)
+
+X_FRAME_OPTIONS = "SAMEORIGIN"
+
+
+
 
 # -------- Security & cross-site settings --------
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in env("DJANGO_CSRF_TRUSTED_ORIGINS","").split(",") if o.strip()]
