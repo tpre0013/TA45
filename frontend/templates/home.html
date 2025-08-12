@@ -75,6 +75,26 @@
       gap: 15px;
     }
 
+    .sidebar-label {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 4px;
+  text-align: center;
+  transition: color 0.3s ease;
+}
+
+.sidebar a:hover .sidebar-label {
+  color: white;
+}
+
+.sidebar a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* ... keep existing styles ... */
+}
+
     .logo-icon {
       background: rgba(255, 255, 255, 0.2);
       border-radius: 16px;
@@ -161,6 +181,8 @@
       position: relative;
       overflow: hidden;
     }
+
+    
 
     .sidebar a::before {
       content: '';
@@ -546,16 +568,16 @@
     }
 
     .error-message {
-      background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
-      color: #c62828;
+      background: linear-gradient(135deg, #e8f5e9 0%, #a5d6a7 100%);
+      color: #388e3c;
       margin: 20px 0;
       padding: 25px;
       border-radius: 16px;
       text-align: center;
       font-size: 18px;
       font-weight: 600;
-      box-shadow: 0 8px 32px rgba(198, 40, 40, 0.1);
-      border: 1px solid rgba(198, 40, 40, 0.1);
+      box-shadow: 0 8px 32px rgba(56, 142, 60, 0.1);
+      border: 1px solid rgba(56, 142, 60, 0.1);
     }
 
     /* Parking card styles - Enhanced */
@@ -572,6 +594,7 @@
       border: 1px solid rgba(0, 0, 0, 0.05);
       position: relative;
       overflow: hidden;
+      cursor: auto;
     }
 
     .parking-card::before {
@@ -586,14 +609,7 @@
       transition: opacity 0.3s ease;
     }
 
-    .parking-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-    }
-
-    .parking-card:hover::before {
-      opacity: 1;
-    }
+  /* .parking-card:hover and ::before removed for static cards */
 
     .info-group {
       display: flex;
@@ -644,6 +660,7 @@
       letter-spacing: 0.5px;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
       transition: all 0.3s ease;
+      cursor: auto;
     }
     
     .status-btn.available {
@@ -662,10 +679,7 @@
       background: linear-gradient(135deg, #9e9e9e, #757575);
     }
 
-    .status-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-    }
+  /* .status-btn:hover removed for static status bar */
 
     .navigate-icon {
       color: #7f8c8d;
@@ -899,41 +913,51 @@
     document.querySelector('.search-container').appendChild(suggestionsDropdown);
 
     // Initialize map
-    function initializeMap(lat, lng) {
-      if (map) {
-        map.remove();
-      }
-      
-      // Show map container and controls
-      mapContainer.classList.add('show');
-      mapControls.classList.add('show');
-      
-      // Create map centered on search location
-      map = L.map('map').setView([lat, lng], 15);
-      
-      // Add OpenStreetMap tiles
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '© OpenStreetMap contributors'
-      }).addTo(map);
-      
-      // Create marker groups
-      markersGroup = L.layerGroup().addTo(map);
-      
-      // Add search location marker
-      searchLocationMarker = L.marker([lat, lng], {
-        icon: L.divIcon({
-          className: 'search-location-marker',
-          html: '<div style="background: #2196F3; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
-          iconSize: [26, 26],
-          iconAnchor: [13, 13]
-        })
-      }).addTo(map);
-      
-      searchLocationMarker.bindPopup(`<b>Search Location</b><br>${currentSearchLocation}`);
-    }
+    // Find the initializeMap function (around line 290) and replace it with this updated version:
+
+function initializeMap(lat, lng) {
+  if (map) {
+    map.remove();
+  }
+  
+  // Remove the default location marker if it exists
+  if (window.defaultLocationMarker) {
+    window.defaultLocationMarker.remove();
+    window.defaultLocationMarker = null;
+  }
+  
+  // Show map container and controls
+  mapContainer.classList.add('show');
+  mapControls.classList.add('show');
+  
+  // Create map centered on search location
+  map = L.map('map').setView([lat, lng], 15);
+  
+  // Add OpenStreetMap tiles
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
+  
+  // Create marker groups
+  markersGroup = L.layerGroup().addTo(map);
+  
+  // Add search location marker (user's searched location)
+  searchLocationMarker = L.marker([lat, lng], {
+    icon: L.divIcon({
+      className: 'search-location-marker',
+      html: '<div style="background: #2196F3; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
+      iconSize: [26, 26],
+      iconAnchor: [13, 13]
+    })
+  }).addTo(map);
+  
+  searchLocationMarker.bindPopup(`<b>📍 Search Location</b><br>${currentSearchLocation}`);
+}
 
     // Initialize default map on page load
+    // Find the initializeDefaultMap function (around line 320) and replace it with this updated version:
+
     function initializeDefaultMap() {
       // Melbourne CBD center coordinates
       const melbourneCBD = { lat: -37.8136, lng: 144.9631 };
@@ -953,6 +977,28 @@
       
       // Create marker groups
       markersGroup = L.layerGroup().addTo(map);
+      
+      // ADD THIS: Create default Melbourne CBD location marker
+      const defaultLocationMarker = L.marker([melbourneCBD.lat, melbourneCBD.lng], {
+        icon: L.divIcon({
+          className: 'default-location-marker',
+          html: '<div style="background: #2196F3; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); position: relative;"><div style="position: absolute; top: -2px; left: -2px; width: 24px; height: 24px; border: 2px solid #2196F3; border-radius: 50%; animation: pulse 2s infinite;"></div></div>',
+          iconSize: [26, 26],
+          iconAnchor: [13, 13]
+        })
+      }).addTo(map);
+      
+      // Add popup to the default marker
+      defaultLocationMarker.bindPopup(`
+        <div style="text-align: center; padding: 5px;">
+          <b>🏙️ Melbourne CBD</b><br>
+          <span style="color: #666; font-size: 14px;">Central Business District</span><br>
+          <span style="color: #888; font-size: 12px;">Search for parking spots in this area</span>
+        </div>
+      `);
+      
+      // Store reference to default marker so we can remove it when user searches
+      window.defaultLocationMarker = defaultLocationMarker;
       
       // Load CBD parking spots on default map
       loadDefaultCBDSpots();
@@ -1216,7 +1262,7 @@
     // Show error message
     function showError(message) {
       const container = document.querySelector('.parking-cards-container');
-      container.innerHTML = `<div class="error-message">❌ ${message}</div>`;
+    container.innerHTML = `<div class="error-message"> Loading parking data, please wait...</div>`;
     }
 
     // Fetch location suggestions from backend
@@ -1232,7 +1278,7 @@
         if (!response.ok) throw new Error('Network response was not ok');
         
         const data = await response.json();
-        suggestions = data.suggestions || [];
+    suggestions = data.suggestions || [];
         displaySuggestions(suggestions);
       } catch (error) {
         console.error('Error fetching suggestions:', error);
@@ -1582,6 +1628,11 @@
       // Check if we have parking data
       if (!currentParkingData || currentParkingData.length === 0) {
         console.log('No parking data, showing no spots message');
+
+      if (isOutOfBounds) {
+    // Don't change the display - keep the out-of-bounds message
+      return;
+    }
         container.innerHTML = `
           <div class="no-parking-message">
             <div style="font-size: 24px; margin-bottom: 12px;">🅿️ No Parking Spots Found</div>
@@ -1685,7 +1736,7 @@
       const parkingCards = document.querySelectorAll('.parking-card');
 
       parkingCards.forEach(function (card) {
-        card.style.cursor = 'pointer';
+        card.style.cursor = 'auto';
       });
 
       const navigateIcons = document.querySelectorAll('.navigate-icon');
@@ -1802,16 +1853,18 @@
 
   <!-- Enhanced Sidebar -->
   <div class="sidebar">
-    <!-- Home Page -->
-    <a href="/" title="Home Page">
-      <span class="material-icons">home</span>
-    </a>
+  <!-- Home Page -->
+  <a href="/" title="Home Page">
+    <span class="material-icons">home</span>
+    <span class="sidebar-label">Home</span>
+  </a>
 
-    <!-- Traffic Insights -->
-    <a href="/traffic/" title="Traffic Insights">
-      <span class="material-icons">map</span>
-    </a>
-  </div>
+  <!-- Traffic Insights -->
+  <a href="/traffic/" title="Traffic Insights">
+    <span class="material-icons">map</span>
+    <span class="sidebar-label">Traffic Insights</span>
+  </a>
+</div>
 
   <!-- Main content -->
   <div class="main">
@@ -1819,7 +1872,7 @@
     <div class="search-section">
       <div class="search-header">
         <h2>Find Your Perfect Parking Spot</h2>
-        <p>Enter a location in Melbourne CBD to discover nearby parking availability</p>
+        <p>Enter a landmark and street  to discover nearby parking availability</p>
       </div>
       
       <div class="search-container">
@@ -1844,7 +1897,7 @@
           <select id="distanceFilter">
             <option value="2">Within 2 km</option>
             <option value="1">Within 1 km</option>
-            <option value="0.5">Within 0.5 km</option>
+            <option value="0.5" selected>Within 0.5 km</option>
           </select>
         </div>
         
@@ -1873,7 +1926,7 @@
        
         <div class="legend-item">
           <span class="legend-color" style="background-color: #2196F3;"></span>
-          <span>Your Search Location</span>
+          <span>Location</span>
         </div>
       </div>
     </div>
