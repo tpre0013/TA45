@@ -546,16 +546,16 @@
     }
 
     .error-message {
-      background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
-      color: #c62828;
+      background: linear-gradient(135deg, #e8f5e9 0%, #a5d6a7 100%);
+      color: #388e3c;
       margin: 20px 0;
       padding: 25px;
       border-radius: 16px;
       text-align: center;
       font-size: 18px;
       font-weight: 600;
-      box-shadow: 0 8px 32px rgba(198, 40, 40, 0.1);
-      border: 1px solid rgba(198, 40, 40, 0.1);
+      box-shadow: 0 8px 32px rgba(56, 142, 60, 0.1);
+      border: 1px solid rgba(56, 142, 60, 0.1);
     }
 
     /* Parking card styles - Enhanced */
@@ -1216,7 +1216,7 @@
     // Show error message
     function showError(message) {
       const container = document.querySelector('.parking-cards-container');
-      container.innerHTML = `<div class="error-message">❌ ${message}</div>`;
+    container.innerHTML = `<div class="error-message"> Loading parking data, please wait...</div>`;
     }
 
     // Fetch location suggestions from backend
@@ -1232,7 +1232,7 @@
         if (!response.ok) throw new Error('Network response was not ok');
         
         const data = await response.json();
-        suggestions = data.suggestions || [];
+    suggestions = data.suggestions || [];
         displaySuggestions(suggestions);
       } catch (error) {
         console.error('Error fetching suggestions:', error);
