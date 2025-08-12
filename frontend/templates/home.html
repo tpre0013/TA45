@@ -572,6 +572,7 @@
       border: 1px solid rgba(0, 0, 0, 0.05);
       position: relative;
       overflow: hidden;
+      cursor: auto;
     }
 
     .parking-card::before {
@@ -586,14 +587,7 @@
       transition: opacity 0.3s ease;
     }
 
-    .parking-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-    }
-
-    .parking-card:hover::before {
-      opacity: 1;
-    }
+  /* .parking-card:hover and ::before removed for static cards */
 
     .info-group {
       display: flex;
@@ -644,6 +638,7 @@
       letter-spacing: 0.5px;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
       transition: all 0.3s ease;
+      cursor: auto;
     }
     
     .status-btn.available {
@@ -662,10 +657,7 @@
       background: linear-gradient(135deg, #9e9e9e, #757575);
     }
 
-    .status-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-    }
+  /* .status-btn:hover removed for static status bar */
 
     .navigate-icon {
       color: #7f8c8d;
@@ -1685,7 +1677,7 @@
       const parkingCards = document.querySelectorAll('.parking-card');
 
       parkingCards.forEach(function (card) {
-        card.style.cursor = 'pointer';
+        card.style.cursor = 'auto';
       });
 
       const navigateIcons = document.querySelectorAll('.navigate-icon');
