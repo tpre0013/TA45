@@ -1728,13 +1728,103 @@ function initializeMap(lat, lng) {
     // Add event handlers for filter changes
     distanceFilter.addEventListener('change', () => {
       updateParkingCards();
-      updateMapMarkers(currentParkingData);
+      if (currentSearchLocation) {
+        updateMapMarkers(currentParkingData);
+      } else {
+        // Apply filter to default CBD map
+        updateDefaultCBDMapWithFilter();
+      }
     });
-    
     sortFilter.addEventListener('change', () => {
-      updateParkingCards();
-      updateMapMarkers(currentParkingData);
-    });
+  updateParkingCards();
+  if (currentSearchLocation) {
+    updateMapMarkers(currentParkingData);
+  } else {
+    // Apply filter to default CBD map
+    updateDefaultCBDMapWithFilter();
+  }
+});
+
+// 3. Add the missing closing brace and call to updateDefaultCBDMapWithFilter in distanceFilter listener
+distanceFilter.addEventListener('change', () => {
+  updateParkingCards();
+  if (currentSearchLocation) {
+    updateMapMarkers(currentParkingData);
+  } else {
+    // Apply filter to default CBD map
+    updateDefaultCBDMapWithFilter();
+  }
+});
+
+// Update the default CBD map markers with current filter
+async function updateDefaultCBDMapWithFilter() {
+  if (!map || !markersGroup) return;
+  markersGroup.clearLayers();
+  
+  try {
+    const response = await fetch('/api/spots/nearby/?lat=-37.8136&lng=144.9631&query=Melbourne CBD');
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success && data.results && data.results.length > 0) {
+        // Apply the current distance filter
+        const maxDistance = parseFloat(distanceFilter.value);
+        let filtered = data.results;
+        
+        // Apply distance filter if a specific distance is selected
+        if (maxDistance > 0) {
+          filtered = data.results.filter(spot => {
+            // Handle different distance formats
+            if (typeof spot.distance === 'number') {
+              return spot.distance <= maxDistance;
+            } else if (typeof spot.distance === 'string' && spot.distance !== '?') {
+              const d = parseFloat(spot.distance);
+              return !isNaN(d) && d <= maxDistance;
+            }
+            // Include spots with unknown distance (they might be very close)
+            return true;
+          });
+        }
+        
+        // Apply sorting using the existing filterAndSortData function
+        filtered = filterAndSortData(filtered);
+        
+        // Add markers for filtered spots
+        filtered.forEach(spot => {
+          const hasAnyFree = spot.segment_counts && Number(spot.segment_counts.available) > 0;
+          const displayStatus = hasAnyFree ? 'Available' : 'Occupied';
+          const color = getStatusColor(displayStatus);
+          const icon = getStatusIcon(displayStatus);
+          
+          const marker = L.marker([spot.lat, spot.lng], {
+            icon: L.divIcon({
+              className: 'parking-marker',
+              html: `<div style="background:${color};color:#fff;width:20px;height:20px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;">${icon}</div>`,
+              iconSize: [24, 24],
+              iconAnchor: [12, 12]
+            })
+          });
+          
+          const popupContent = `
+            <div class="custom-popup">
+              <div class="popup-content">
+                <div class="popup-title">${spot.address}</div>
+                <div class="popup-status" style="background-color:${color};">Segment: ${displayStatus}</div>
+                ${spot.segment_counts ? `<div class="popup-info">Available: ${spot.segment_counts.available} of ${spot.segment_counts.total} bays</div>` : ``}
+                <button class="popup-navigate" onclick="openNavigation(${spot.lat}, ${spot.lng}, '${spot.address.replace(/'/g, "\\'")}')">Navigate</button>
+              </div>
+            </div>
+          `;
+          
+          marker.bindPopup(popupContent);
+          markersGroup.addLayer(marker);
+        });
+      }
+    }
+  } catch (error) {
+    console.log('Could not update default CBD spots with filter:', error);
+  }
+}
+
 
     // Hover + dblclick + nav icons
     function addCardEvents() {
