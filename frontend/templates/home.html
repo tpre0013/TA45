@@ -1009,62 +1009,89 @@ function initializeMap(lat, lng) {
 
 
     //------------------------------
+
+    // Helper function to calculate distance between two points (Haversine formula)
+function calculateDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c; // Distance in kilometers
+}
     
 
     // Load CBD spots for the default map
-    async function loadDefaultCBDSpots() {
-      try {
-        const response = await fetch('/api/spots/nearby/?lat=-37.8136&lng=144.9631&query=Melbourne CBD');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && data.results && data.results.length > 0) {
-            // Add markers for all CBD spots
-            data.results.forEach(spot => {
-              const hasAnyFree = spot.segment_counts && Number(spot.segment_counts.available) > 0;
-              const displayStatus = hasAnyFree ? 'Available' : 'Occupied';
-              const color = getStatusColor(displayStatus);
-              const icon = getStatusIcon(displayStatus);
+async function loadDefaultCBDSpots() {
+  try {
+    const response = await fetch('/api/spots/nearby/?lat=-37.8136&lng=144.9631&query=Melbourne CBD');
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success && data.results && data.results.length > 0) {
+        // Melbourne CBD center coordinates (same as the blue marker)
+        const cbdLat = -37.8136;
+        const cbdLng = 144.9631;
+        const defaultMaxDistance = 0.5; // Match the default filter setting
+        
+        // Filter spots within 0.5km of CBD center
+        let filtered = data.results.filter(spot => {
+          const distance = calculateDistance(cbdLat, cbdLng, spot.lat, spot.lng);
+          return distance <= defaultMaxDistance;
+        });
 
-              const marker = L.marker([spot.lat, spot.lng], {
-                icon: L.divIcon({
-                  className: 'parking-marker',
-                  html: `<div style="
-                    background:${color};
-                    color:#fff;
-                    width:20px;height:20px;border-radius:50%;
-                    border:2px solid #fff;
-                    box-shadow:0 2px 4px rgba(0,0,0,.3);
-                    display:flex;align-items:center;justify-content:center;
-                    font-size:10px;font-weight:bold;">${icon}</div>`,
-                  iconSize: [24, 24],
-                  iconAnchor: [12, 12]
-                })
-              });
+        // Apply sorting
+        filtered = filterAndSortData(filtered);
 
-              const popupContent = `
-                <div class="custom-popup">
-                  <div class="popup-content">
-                    <div class="popup-title">${spot.address}</div>
-                    <div class="popup-status" style="background-color:${color};">Segment: ${displayStatus}</div>
-                    ${spot.segment_counts ? `
-                      <div class="popup-info">
-                        Available: ${spot.segment_counts.available} of ${spot.segment_counts.total} bays
-                      </div>` : ``}
-                    <button class="popup-navigate" onclick="openNavigation(${spot.lat}, ${spot.lng}, '${spot.address.replace(/'/g, "\\'")}')">Navigate</button>
-                  </div>
-                </div>
-              `;
+        // Add markers for filtered spots only
+        filtered.forEach(spot => {
+          const hasAnyFree = spot.segment_counts && Number(spot.segment_counts.available) > 0;
+          const displayStatus = hasAnyFree ? 'Available' : 'Occupied';
+          const color = getStatusColor(displayStatus);
+          const icon = getStatusIcon(displayStatus);
 
-              marker.bindPopup(popupContent);
-              markersGroup.addLayer(marker);
-            });
-          }
-        }
-      } catch (error) {
-        console.log('Could not load default CBD spots:', error);
+          const marker = L.marker([spot.lat, spot.lng], {
+            icon: L.divIcon({
+              className: 'parking-marker',
+              html: `<div style="
+                background:${color};
+                color:#fff;
+                width:20px;height:20px;border-radius:50%;
+                border:2px solid #fff;
+                box-shadow:0 2px 4px rgba(0,0,0,.3);
+                display:flex;align-items:center;justify-content:center;
+                font-size:10px;font-weight:bold;">${icon}</div>`,
+              iconSize: [24, 24],
+              iconAnchor: [12, 12]
+            })
+          });
+
+          const popupContent = `
+            <div class="custom-popup">
+              <div class="popup-content">
+                <div class="popup-title">${spot.address}</div>
+                <div class="popup-status" style="background-color:${color};">Segment: ${displayStatus}</div>
+                ${spot.segment_counts ? `
+                  <div class="popup-info">
+                    Available: ${spot.segment_counts.available} of ${spot.segment_counts.total} bays
+                  </div>` : ``}
+                <button class="popup-navigate" onclick="openNavigation(${spot.lat}, ${spot.lng}, '${spot.address.replace(/'/g, "\\'")}')">Navigate</button>
+              </div>
+            </div>
+          `;
+
+          marker.bindPopup(popupContent);
+          markersGroup.addLayer(marker);
+        });
+        
+        console.log(`Loaded ${filtered.length} spots within 0.5km of CBD center`);
       }
     }
-
+  } catch (error) {
+    console.log('Could not load default CBD spots:', error);
+  }
+}
     // Update map markers based on filtered data
     function updateMapMarkers(parkingData) {
       if (!map || !markersGroup) return;
@@ -1266,6 +1293,8 @@ function initializeMap(lat, lng) {
     }
 
     // Fetch location suggestions from backend
+    // Fetch location suggestions from backend
+    // Fetch location suggestions from backend
     async function fetchSuggestions(query) {
       if (!query || query.length < 2) {
         hideSuggestions();
@@ -1278,13 +1307,40 @@ function initializeMap(lat, lng) {
         if (!response.ok) throw new Error('Network response was not ok');
         
         const data = await response.json();
-    suggestions = data.suggestions || [];
+        suggestions = data.suggestions || [];
+        
+        // Always add a "Search for [query]" option at the end if there are suggestions
+        // or show it as the only option if no suggestions found
+        if (query.trim().length >= 2) {
+          const searchOption = {
+            text: query,
+            description: `Search for "${query}" in Melbourne area`,
+            type: 'search',
+            lat: null,
+            lng: null
+          };
+          suggestions.push(searchOption);
+        }
+        
         displaySuggestions(suggestions);
       } catch (error) {
         console.error('Error fetching suggestions:', error);
-        hideSuggestions();
+        // Even on error, allow user to search for their input
+        if (query.trim().length >= 2) {
+          suggestions = [{
+            text: query,
+            description: `Search for "${query}" in Melbourne area`,
+            type: 'search',
+            lat: null,
+            lng: null
+          }];
+          displaySuggestions(suggestions);
+        } else {
+          hideSuggestions();
+        }
       }
     }
+    
 
     // Show loading in suggestions dropdown
     function showSuggestionsLoading() {
@@ -1350,29 +1406,28 @@ function initializeMap(lat, lng) {
 
     // Handle keyboard navigation in suggestions
     function handleSuggestionNavigation(e) {
-    const suggestionItems = suggestionsDropdown.querySelectorAll('.suggestion-item');
-    
-    if (e.key === 'ArrowDown') {
+      const suggestionItems = suggestionsDropdown.querySelectorAll('.suggestion-item');
+      
+      if (e.key === 'ArrowDown') {
         e.preventDefault();
         selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, suggestionItems.length - 1);
         updateSuggestionHighlight();
-    } else if (e.key === 'ArrowUp') {
+      } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, -1);
         updateSuggestionHighlight();
-    } else if (e.key === 'Enter') {
+      } else if (e.key === 'Enter') {
         e.preventDefault();
         if (selectedSuggestionIndex >= 0) {
-            selectSuggestion(selectedSuggestionIndex);
+          selectSuggestion(selectedSuggestionIndex);
         } else {
-            // FIX: Always allow search even when no suggestion is selected
-            hideSuggestions();
-            performSearch();
+          hideSuggestions();
+          performSearch();
         }
-    } else if (e.key === 'Escape') {
+      } else if (e.key === 'Escape') {
         hideSuggestions();
+      }
     }
-}
 
     // Update visual highlighting of suggestions
     function updateSuggestionHighlight() {
@@ -1599,7 +1654,7 @@ function initializeMap(lat, lng) {
       <div style="font-size: 24px; font-weight: 600; margin-bottom: 12px; color: #2c3e50;">${displayMessage}</div>
       <div style="font-size: 16px; color: #5a6c7d; margin-bottom: 16px;">${subMessage}</div>
       <div style="font-size: 14px; color: #7f8c8d; background: rgba(255, 255, 255, 0.7); padding: 12px; border-radius: 8px; margin-top: 16px;">
-        💡 Try searching for: Flinders Street Station, Southern Cross Station, Federation Square, etc.
+        💡 Try searching for: Flinders Street Station, Collins Street, Bourke Street Mall, Federation Square, etc.
       </div>
     </div>
   `;
@@ -1758,6 +1813,7 @@ distanceFilter.addEventListener('change', () => {
 });
 
 // Update the default CBD map markers with current filter
+// Update the default CBD map markers with current filter
 async function updateDefaultCBDMapWithFilter() {
   if (!map || !markersGroup) return;
   markersGroup.clearLayers();
@@ -1767,24 +1823,18 @@ async function updateDefaultCBDMapWithFilter() {
     if (response.ok) {
       const data = await response.json();
       if (data.success && data.results && data.results.length > 0) {
-        // Apply the current distance filter
-        const maxDistance = parseFloat(distanceFilter.value);
-        let filtered = data.results;
+        // Melbourne CBD center coordinates (same as the blue marker)
+        const cbdLat = -37.8136;
+        const cbdLng = 144.9631;
         
-        // Apply distance filter if a specific distance is selected
-        if (maxDistance > 0) {
-          filtered = data.results.filter(spot => {
-            // Handle different distance formats
-            if (typeof spot.distance === 'number') {
-              return spot.distance <= maxDistance;
-            } else if (typeof spot.distance === 'string' && spot.distance !== '?') {
-              const d = parseFloat(spot.distance);
-              return !isNaN(d) && d <= maxDistance;
-            }
-            // Include spots with unknown distance (they might be very close)
-            return true;
-          });
-        }
+        // Get the current distance filter value from dropdown
+        const maxDistance = parseFloat(distanceFilter.value);
+        
+        // Filter spots within the selected distance from CBD center
+        let filtered = data.results.filter(spot => {
+          const distance = calculateDistance(cbdLat, cbdLng, spot.lat, spot.lng);
+          return distance <= maxDistance;
+        });
         
         // Apply sorting using the existing filterAndSortData function
         filtered = filterAndSortData(filtered);
@@ -1799,7 +1849,14 @@ async function updateDefaultCBDMapWithFilter() {
           const marker = L.marker([spot.lat, spot.lng], {
             icon: L.divIcon({
               className: 'parking-marker',
-              html: `<div style="background:${color};color:#fff;width:20px;height:20px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;">${icon}</div>`,
+              html: `<div style="
+                background:${color};
+                color:#fff;
+                width:20px;height:20px;border-radius:50%;
+                border:2px solid #fff;
+                box-shadow:0 2px 4px rgba(0,0,0,.3);
+                display:flex;align-items:center;justify-content:center;
+                font-size:10px;font-weight:bold;">${icon}</div>`,
               iconSize: [24, 24],
               iconAnchor: [12, 12]
             })
@@ -1810,7 +1867,10 @@ async function updateDefaultCBDMapWithFilter() {
               <div class="popup-content">
                 <div class="popup-title">${spot.address}</div>
                 <div class="popup-status" style="background-color:${color};">Segment: ${displayStatus}</div>
-                ${spot.segment_counts ? `<div class="popup-info">Available: ${spot.segment_counts.available} of ${spot.segment_counts.total} bays</div>` : ``}
+                ${spot.segment_counts ? `
+                  <div class="popup-info">
+                    Available: ${spot.segment_counts.available} of ${spot.segment_counts.total} bays
+                  </div>` : ``}
                 <button class="popup-navigate" onclick="openNavigation(${spot.lat}, ${spot.lng}, '${spot.address.replace(/'/g, "\\'")}')">Navigate</button>
               </div>
             </div>
@@ -1819,6 +1879,8 @@ async function updateDefaultCBDMapWithFilter() {
           marker.bindPopup(popupContent);
           markersGroup.addLayer(marker);
         });
+        
+        console.log(`Updated map with ${filtered.length} spots within ${maxDistance}km of CBD center`);
       }
     }
   } catch (error) {
@@ -2001,7 +2063,7 @@ async function updateDefaultCBDMapWithFilter() {
           <label for="sortFilter">🔄 Sort by:</label>
           <select id="sortFilter">
             <option value="availability">Availability (Available first)</option>
-            <option value="distance">Distance (Nearest first)</option>
+            <option value="distance" selected>Distance (Nearest first)</option>
           </select>
         </div>
       </div>
