@@ -1626,20 +1626,25 @@ function initializeMap(lat, lng) {
       if (existingErrorMsg) existingErrorMsg.remove();
 
       // Check if we have parking data
-      if (!currentParkingData || currentParkingData.length === 0) {
-        console.log('No parking data, showing no spots message');
-
-      if (isOutOfBounds) {
-    // Don't change the display - keep the out-of-bounds message
-      return;
-    }
-        container.innerHTML = `
-          <div class="no-parking-message">
-            <div style="font-size: 24px; margin-bottom: 12px;">🅿️ No Parking Spots Found</div>
-            <div>No parking data available near ${currentSearchLocation || 'this location'}</div>
-            <div style="font-size: 16px; color: #7f8c8d; margin-top: 12px;">Try searching a different location within Melbourne CBD</div>
-          </div>
-        `;
+      if ((!currentParkingData || currentParkingData.length === 0)) {
+        // Only show the no parking message if the user has searched (currentSearchLocation is set)
+        if (currentSearchLocation) {
+          console.log('No parking data, showing no spots message');
+          if (isOutOfBounds) {
+            // Don't change the display - keep the out-of-bounds message
+            return;
+          }
+          container.innerHTML = `
+            <div class="no-parking-message">
+              <div style="font-size: 24px; margin-bottom: 12px;">🅿️ No Parking Spots Found</div>
+              <div>No parking data available near ${currentSearchLocation || 'this location'}</div>
+              <div style="font-size: 16px; color: #7f8c8d; margin-top: 12px;">Try searching a different location within Melbourne CBD</div>
+            </div>
+          `;
+        } else {
+          // User has not searched, show nothing
+          container.innerHTML = '';
+        }
         return;
       }
 
