@@ -1350,28 +1350,29 @@ function initializeMap(lat, lng) {
 
     // Handle keyboard navigation in suggestions
     function handleSuggestionNavigation(e) {
-      const suggestionItems = suggestionsDropdown.querySelectorAll('.suggestion-item');
-      
-      if (e.key === 'ArrowDown') {
+    const suggestionItems = suggestionsDropdown.querySelectorAll('.suggestion-item');
+    
+    if (e.key === 'ArrowDown') {
         e.preventDefault();
         selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, suggestionItems.length - 1);
         updateSuggestionHighlight();
-      } else if (e.key === 'ArrowUp') {
+    } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, -1);
         updateSuggestionHighlight();
-      } else if (e.key === 'Enter') {
+    } else if (e.key === 'Enter') {
         e.preventDefault();
         if (selectedSuggestionIndex >= 0) {
-          selectSuggestion(selectedSuggestionIndex);
+            selectSuggestion(selectedSuggestionIndex);
         } else {
-          hideSuggestions();
-          performSearch();
+            // FIX: Always allow search even when no suggestion is selected
+            hideSuggestions();
+            performSearch();
         }
-      } else if (e.key === 'Escape') {
+    } else if (e.key === 'Escape') {
         hideSuggestions();
-      }
     }
+}
 
     // Update visual highlighting of suggestions
     function updateSuggestionHighlight() {
@@ -1598,7 +1599,7 @@ function initializeMap(lat, lng) {
       <div style="font-size: 24px; font-weight: 600; margin-bottom: 12px; color: #2c3e50;">${displayMessage}</div>
       <div style="font-size: 16px; color: #5a6c7d; margin-bottom: 16px;">${subMessage}</div>
       <div style="font-size: 14px; color: #7f8c8d; background: rgba(255, 255, 255, 0.7); padding: 12px; border-radius: 8px; margin-top: 16px;">
-        💡 Try searching for: Flinders Street Station, Collins Street, Bourke Street Mall, Federation Square, etc.
+        💡 Try searching for: Flinders Street Station, Southern Cross Station, Federation Square, etc.
       </div>
     </div>
   `;
